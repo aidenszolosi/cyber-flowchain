@@ -5,6 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
+flowchain_outputs/*
 
 # Virtual environments
 .venv

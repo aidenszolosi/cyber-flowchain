@@ -1,89 +1,109 @@
-# Cyber Flowchain 🔐⚙️
+# Cyber-Flowchain 🛡️📡  
+**Pure-Python recon + AI reporting, powered by `uv`**
 
-An automated cybersecurity flowchain that runs multiple reconnaissance tools (Netstat, Nmap, Metasploit) and cleans their outputs for reporting and AI-based analysis. Built as part of a Capstone project at Columbus State Community College.
+A **single-file**, cross-platform cybersecurity TUI that…
 
----
+* performs host discovery, TCP connect-scans, banner grabs, HTTP probing, TLS-certificate peeking and legacy-TLS tests — **no Kali, no Nmap, no OpenSSL CLI**  
+* streams a YAML snapshot to a local **DeepSeek R1** model (via Ollama) and renders the AI’s executive summary live in your terminal  
+* stores every run under `flowchain_outputs/` for later auditing  
 
-## 🧩 Features
-
-- Modular Python script with clean separation of concerns
-- Runs:
-  - `netstat` for local port monitoring
-  - `nmap` for remote port scanning
-  - `metasploit` auxiliary modules for vulnerability checks
-- Cleans and parses messy terminal output (removes color codes, box-drawing junk)
-- Exports Markdown and JSON reports for each scan
-- Ready for LLM integration in future phases (e.g., DeepSeek R1)
+The project now uses **`uv`** (a super-fast Rust replacement for pip + virtualenv) for reproducible, lightning-quick installs.
 
 ---
 
-## 🛠️ Project Structure
+## ✨ Features
+
+| Module                | Details (Python-only)                                  |
+|-----------------------|--------------------------------------------------------|
+| Ping sweep            | Optional via `pythonping`                              |
+| TCP connect-scan      | 200-thread multiscanner                                |
+| Service fingerprint   | IANA names for every open port                         |
+| Banner grab           | First 128 B greeting                                   |
+| HTTP probe            | `Server` header + HTML `<title>`                       |
+| TLS peek              | CN / issuer / expiry via `cryptography`                |
+| Legacy TLS detection  | Attempts TLS 1.0 / 1.1 handshakes                      |
+| Fallback wide scan    | Auto-scans ports 1-1024 if nothing found on user list  |
+| AI summary            | Streams tokens from DeepSeek R1 via Ollama             |
+
+---
+
+## 📦 Quick start (with **uv**)
+
+> **Prerequisites**  
+> – Python 3.10+  
+> – [Ollama](https://ollama.com/) with DeepSeek R1 (`ollama pull deepseek-r1:14b`)  
+> – A recent `uv` binary  
+
+```bash
+# Install uv (macOS/Linux)
+curl -Ls https://astral.sh/uv/install.sh | sh
+# Windows → winget install astral.uv
+
+git clone https://github.com/yourname/cyber-flowchain.git
+cd cyber-flowchain
+
+uv venv .venv
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
+
+uv pip install -r requirements.txt   # milliseconds!
+
+# in another terminal
+ollama serve                         # http://localhost:11434
+
+uv run main.py
+```
+
+---
+
+## 🚀 Example run
 
 ```
-cyber-flowchain/
-├── main.py
-├── modules/
-│   ├── scanner.py      # Handles scan commands
-│   ├── utils.py        # Directory + password helpers
-│   └── parser.py       # Cleans and structures scan outputs
-├── scan_results/       # All raw + parsed scan files go here
+Targets (comma/CIDR) [127.0.0.1]: scanme.nmap.org
+Ping sweep first? (y/n) [y]:
+Grab banners? (y/n) [y]:
+AI executive summary? (y/n) [y]:
+
+── Port scanning
+✓ scanme.nmap.org  →  22/tcp  80/tcp
+
+── 🤖 DeepSeek R1 stream 🤖
+• SSH 22: OpenSSH 6.6p1 (EOL)  
+• HTTP 80: Apache 2.4.7 default page  
+Risk = **Medium** …
+```
+
+Artifacts:
+
+```
+flowchain_outputs/
+└── 20250424T174500Z/
+    ├── snapshot.yaml   # structured findings
+    └── summary.md      # AI narrative
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🔧 Project layout
 
-1. Clone the repo  
-   ```bash
-   git clone https://github.com/aidenszolosi/cyber-flowchain.git
-   cd cyber-flowchain
-   ```
-
-2. Install dependencies (Python 3.8+ recommended)  
-   ```bash
-   pip install tqdm
-   ```
-
-3. Run the main script  
-   ```bash
-   python main.py
-   ```
-
-4. Enter your `sudo` password when prompted (required for `netstat`)
+```
+.
+├── main.py            ← ~400 LOC TUI
+├── requirements.txt   ← deps for uv pip
+└── README.md
+```
 
 ---
 
-## 📂 Output Files
+## 🛠️  Dev tips (uv)
 
-All output files are saved inside the `scan_results/` directory:
+| Task                         | Command                                  |
+|------------------------------|------------------------------------------|
+| Add dependency               | `uv pip install rich`                    |
+| Run pytest                   | `uv pip install pytest` → `uv run -m pytest` |
+| Sync env from lockfile       | `uv pip sync`                            |
+| Upgrade deps                 | `uv pip install --upgrade -r requirements.txt` |
 
-| File                    | Description                            |
-|-------------------------|----------------------------------------|
-| `netstat_output.txt`    | Raw output from netstat                |
-| `nmap_scan.txt`         | Raw output from Nmap                   |
-| `metasploit_scan.txt`   | Raw output from Metasploit auxiliary   |
-| `parsed_*.md`           | Cleaned, readable version              |
-| `parsed_*.json`         | Structured output for AI consumption   |
-
----
-
-## 🧠 Future Plans (Phase 3+)
-
-- Integrate DeepSeek R1 to summarize findings
-- Generate human-readable vulnerability reports
-- Add custom module selection + scan configuration
-- Export to PDF or HTML
+`uv` stores a deterministic lockfile in `.venv/packages.lock.toml`.
 
 ---
 
-## 📜 License
-
-MIT – do whatever you want with it, just credit when appropriate.
-
----
-
-## 👤 Author
-
-**Aiden Szolosi**  
-Capstone Student – Columbus State Community College  
-GitHub: [@aidenszolosi](https://github.com/aidenszolosi)
